@@ -1,0 +1,19 @@
+model Planting {
+  id                  String    @id @default(uuid())
+  plantedAreaHectares Decimal   @map("planted_area_hectares") @db.Decimal(10, 2)
+  plantingDate        DateTime? @map("planting_date") @db.Date
+  expectedHarvestDate DateTime? @map("expected_harvest_date") @db.Date
+  notes               String?   @db.Text
+
+  farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
+  farmId String @map("farm_id")
+
+  season   Season @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  seasonId String @map("season_id")
+
+  crop   Crop   @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  cropId String @map("crop_id")
+
+  @@unique([farmId, seasonId, cropId])
+  @@map("plantings")
+}

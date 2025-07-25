@@ -1,0 +1,10 @@
+model Crop {
+  id          String  @id @default(uuid())
+  name        String  @unique @db.VarChar(100)
+  description String? @db.Text
+  category    String? @db.VarChar(50)
+
+  plantings Planting[]
+
+  @@map("crops")
+}

@@ -1,0 +1,39 @@
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: teste-brain-ag-db
+    environment:
+      POSTGRES_DB: brain_ag
+      POSTGRES_USER: docker
+      POSTGRES_PASSWORD: docker
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - brain-ag-network
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: teste-brain-ag-app
+    environment:
+      DATABASE_URL: 'postgresql://docker:docker@postgres:5432/brain_ag?schema=public'
+      NODE_ENV: production
+    ports:
+      - '3000:3000'
+    depends_on:
+      - postgres
+    networks:
+      - brain-ag-network
+    volumes:
+      - .:/app
+      - /app/node_modules
+
+volumes:
+  postgres_data:
+
+networks:
+  brain-ag-network:
+    driver: bridge

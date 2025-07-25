@@ -1,0 +1,19 @@
+model Farm {
+  id                     String  @id @default(uuid())
+  name                   String  @db.VarChar(255)
+  city                   String  @db.VarChar(100)
+  state                  String  @db.VarChar(2)
+  totalAreaHectares      Decimal @map("total_area_hectares") @db.Decimal(10, 2)
+  arableAreaHectares     Decimal @map("arable_area_hectares") @db.Decimal(10, 2)
+  vegetationAreaHectares Decimal @map("vegetation_area_hectares") @db.Decimal(10, 2)
+
+  producer   Producer @relation(fields: [producerId], references: [id], onDelete: Cascade)
+  producerId String   @map("producer_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  plantings Planting[]
+
+  @@map("farms")
+}

@@ -1,0 +1,12 @@
+model Producer {
+  id      String @id @default(uuid())
+  cpfCnpj String @unique @map("cpf_cnpj") @db.VarChar(14)
+  name    String @db.VarChar(255)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  farms Farm[]
+
+  @@map("producers")
+}
