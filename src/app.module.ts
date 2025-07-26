@@ -1,11 +1,12 @@
 import { Module, ValidationPipe } from '@nestjs/common';
-import { CropModule } from './modules/crop/crop.module';
-import { FarmModule } from './modules/farm/farm.module';
-import { PlantingModule } from './modules/planting/planting.module';
-import { ProducerModule } from './modules/producer/producer.module';
-import { SeasonModule } from './modules/season/season.module';
+import { CropModule } from '@modules/crop/crop.module';
+import { FarmModule } from '@modules/farm/farm.module';
+import { PlantingModule } from '@modules/planting/planting.module';
+import { ProducerModule } from '@modules/producer/producer.module';
+import { SeasonModule } from '@modules/season/season.module';
 import { APP_PIPE } from '@nestjs/core';
 import { PrismaModule } from '@database/prisma/prisma.module';
+import { DashboardModule } from '@modules/dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -15,6 +16,7 @@ import { PrismaModule } from '@database/prisma/prisma.module';
     SeasonModule,
     CropModule,
     PlantingModule,
+    DashboardModule,
   ],
   providers: [
     {

@@ -1,15 +1,15 @@
+import { CropsRepository } from '@modules/crop/repositories/crops.repository';
+import { FarmsRepository } from '@modules/farm/repositories/farms.repository';
+import { PlantingsRepository } from '@modules/planting/repositories/plantings.repository';
+import { ProducersRepository } from '@modules/producer/repositories/producers.repository';
+import { SeasonsRepository } from '@modules/season/repositories/seasons.repository';
 import { Module } from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { PrismaProducersRepository } from './repositories/prisma-producers.repository';
-import { ProducersRepository } from '@modules/producer/repositories/producers.repository';
-import { PrismaFarmsRepository } from './repositories/prisma-farms.repository';
-import { FarmsRepository } from '@modules/farm/repositories/farms.repository';
-import { CropsRepository } from '@modules/crop/repositories/crops.repository';
 import { PrismaCropsRepository } from './repositories/prisma-crops.repository';
-import { SeasonsRepository } from '@modules/season/repositories/seasons.repository';
-import { PrismaSeasonsRepository } from './repositories/prisma-seasons.repository';
-import { PlantingsRepository } from '@modules/planting/repositories/plantings.repository';
+import { PrismaFarmsRepository } from './repositories/prisma-farms.repository';
 import { PrismaPlantingsRepository } from './repositories/prisma-plantings.repository';
+import { PrismaProducersRepository } from './repositories/prisma-producers.repository';
+import { PrismaSeasonsRepository } from './repositories/prisma-seasons.repository';
 
 @Module({
   providers: [
