@@ -29,19 +29,19 @@ const seed = async () => {
   const seasons = await Promise.all([
     prisma.season.create({
       data: {
-        name: 'Safra 2024/2025',
-        year: 2024,
-        startDate: new Date('2024-09-01'),
-        endDate: new Date('2025-08-31'),
+        name: 'Safra 2025/2026',
+        year: 2025,
+        startDate: new Date('2025-09-01'),
+        endDate: new Date('2026-08-31'),
         active: true,
       },
     }),
     prisma.season.create({
       data: {
-        name: 'Safra 2023/2024',
-        year: 2023,
-        startDate: new Date('2023-09-01'),
-        endDate: new Date('2024-08-31'),
+        name: 'Safra 2024/2025',
+        year: 2024,
+        startDate: new Date('2024-09-01'),
+        endDate: new Date('2025-08-31'),
         active: false,
       },
     }),
@@ -106,8 +106,8 @@ const seed = async () => {
         seasonId: seasons[0].id,
         cropId: crops[0].id, // Soja
         plantedAreaHectares: 200.0,
-        plantingDate: new Date('2023-10-15'),
-        expectedHarvestDate: new Date('2024-02-15'),
+        plantingDate: new Date('2025-10-15'),
+        expectedHarvestDate: new Date('2026-02-15'),
         notes: 'Plantio realizado com sementes de alta produtividade',
       },
     }),
@@ -117,8 +117,8 @@ const seed = async () => {
         seasonId: seasons[0].id,
         cropId: crops[1].id, // Milho
         plantedAreaHectares: 150.0,
-        plantingDate: new Date('2023-11-01'),
-        expectedHarvestDate: new Date('2024-03-01'),
+        plantingDate: new Date('2025-11-01'),
+        expectedHarvestDate: new Date('2026-03-01'),
         notes: 'Milho safrinha plantado após a soja',
       },
     }),

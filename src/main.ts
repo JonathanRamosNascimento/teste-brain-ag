@@ -10,8 +10,14 @@ async function bootstrap() {
     .setDescription('API do sistema de gerenciamento de produtores rurais')
     .setVersion('1.0')
     .build();
+
   const documentFactory = () => SwaggerModule.createDocument(app, config);
-  SwaggerModule.setup('docs', app, documentFactory);
+
+  SwaggerModule.setup('docs', app, documentFactory, {
+    swaggerOptions: {
+      docExpansion: 'none',
+    },
+  });
 
   await app.listen(process.env.PORT ?? 3000);
 }

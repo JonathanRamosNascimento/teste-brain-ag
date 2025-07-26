@@ -21,8 +21,9 @@
     "test:watch": "jest --watch",
     "test:cov": "jest --coverage",
     "test:debug": "node --inspect-brk -r tsconfig-paths/register -r ts-node/register node_modules/.bin/jest --runInBand",
-    "test:e2e": "jest --config ./test/jest-e2e.json",
-    "run:seed": "npx prisma db seed"
+    "test:e2e": "jest --config ./jest-e2e.json",
+    "run:seed": "npx prisma db seed",
+    "studio": "npx prisma studio"
   },
   "dependencies": {
     "@nestjs/common": "^11.0.1",
@@ -79,6 +80,15 @@
       "**/*.(t|j)s"
     ],
     "coverageDirectory": "../coverage",
-    "testEnvironment": "node"
+    "testEnvironment": "node",
+    "moduleNameMapper": {
+      "^@database/(.*)$": "<rootDir>/database/$1",
+      "^@env/(.*)$": "<rootDir>/env/$1",
+      "^@errors/(.*)$": "<rootDir>/errors/$1",
+      "^@guards/(.*)$": "<rootDir>/guards/$1",
+      "^@interfaces/(.*)$": "<rootDir>/interfaces/$1",
+      "^@modules/(.*)$": "<rootDir>/modules/$1",
+      "^@test/(.*)$": "<rootDir>/../test/$1"
+    }
   }
 }

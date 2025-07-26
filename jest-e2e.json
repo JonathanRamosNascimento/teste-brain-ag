@@ -1,0 +1,28 @@
+{
+  "moduleFileExtensions": [
+    "js",
+    "json",
+    "ts"
+  ],
+  "rootDir": ".",
+  "testEnvironment": "node",
+  "testRegex": ".e2e-spec.ts$",
+  "maxWorkers": 1,
+  "transform": {
+    "^.+\\.(t|j)s$": [
+      "ts-jest",
+      {
+        "tsconfig": "tsconfig.json"
+      }
+    ]
+  },
+  "moduleNameMapper": {
+    "^@database/(.*)$": "<rootDir>/src/database/$1",
+    "^@env/(.*)$": "<rootDir>/src/env/$1",
+    "^@errors/(.*)$": "<rootDir>/src/errors/$1",
+    "^@guards/(.*)$": "<rootDir>/src/guards/$1",
+    "^@interfaces/(.*)$": "<rootDir>/src/interfaces/$1",
+    "^@modules/(.*)$": "<rootDir>/src/modules/$1",
+    "^@test/(.*)$": "<rootDir>/test/$1"
+  }
+}

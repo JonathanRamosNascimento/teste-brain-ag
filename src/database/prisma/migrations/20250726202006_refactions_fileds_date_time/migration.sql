@@ -1,0 +1,7 @@
+-- AlterTable
+ALTER TABLE "plantings" ALTER COLUMN "planting_date" SET DATA TYPE TIMESTAMP(3),
+ALTER COLUMN "expected_harvest_date" SET DATA TYPE TIMESTAMP(3);
+
+-- AlterTable
+ALTER TABLE "seasons" ALTER COLUMN "start_date" SET DATA TYPE TIMESTAMP(3),
+ALTER COLUMN "end_date" SET DATA TYPE TIMESTAMP(3);

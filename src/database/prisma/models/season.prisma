@@ -2,8 +2,8 @@ model Season {
   id        String   @id @default(uuid())
   name      String   @db.VarChar(50)
   year      Int
-  startDate DateTime @map("start_date") @db.Date
-  endDate   DateTime @map("end_date") @db.Date
+  startDate DateTime @map("start_date")
+  endDate   DateTime @map("end_date")
   active    Boolean  @default(true)
 
   plantings Planting[]

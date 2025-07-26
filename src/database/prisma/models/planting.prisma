@@ -1,8 +1,8 @@
 model Planting {
   id                  String    @id @default(uuid())
   plantedAreaHectares Decimal   @map("planted_area_hectares") @db.Decimal(10, 2)
-  plantingDate        DateTime? @map("planting_date") @db.Date
-  expectedHarvestDate DateTime? @map("expected_harvest_date") @db.Date
+  plantingDate        DateTime? @map("planting_date")
+  expectedHarvestDate DateTime? @map("expected_harvest_date")
   notes               String?   @db.Text
 
   farm   Farm   @relation(fields: [farmId], references: [id], onDelete: Cascade)
