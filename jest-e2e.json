@@ -1,11 +1,11 @@
 {
+  "testEnvironment": "./src/database/prisma/prisma-test-environment.ts",
   "moduleFileExtensions": [
     "js",
     "json",
     "ts"
   ],
   "rootDir": ".",
-  "testEnvironment": "node",
   "testRegex": ".e2e-spec.ts$",
   "maxWorkers": 1,
   "transform": {
