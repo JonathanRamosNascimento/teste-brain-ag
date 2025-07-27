@@ -1,98 +1,179 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+## Descrição
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API de gerenciamento de cadastro de produtores rurais
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
-
-## Description
-
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
-
-## Project setup
+## Instalar as dependências do projeto
 
 ```bash
-$ npm install
+npm install
 ```
 
-## Compile and run the project
+## Configuração de Ambiente
+
+1. Copie o arquivo `.env.example` para `.env`
+2. Ajuste as variáveis conforme necessário
+3. Para desenvolvimento local, use:
+   ```
+   DATABASE_URL="postgresql://postgres:postgres123@localhost:5432/brain_ag_dev?schema=public"
+   ```
+
+## Executar o projeto
 
 ```bash
 # development
-$ npm run start
+npm run start
 
 # watch mode
-$ npm run start:dev
+npm run start:dev
 
 # production mode
-$ npm run start:prod
+npm run start:prod
 ```
 
-## Run tests
+## Executar os testes
 
 ```bash
 # unit tests
-$ npm run test
+npm run test
 
 # e2e tests
-$ npm run test:e2e
+npm run test:e2e
 
 # test coverage
-$ npm run test:cov
+npm run test:cov
 ```
 
-## Deployment
+## Docker
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### 1. Comandos principais
 
 ```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
+# Subir os serviços em modo produção
+docker-compose up -d
+
+# Ver logs da aplicação
+docker-compose logs -f app
+
+# Parar os serviços
+docker-compose down
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+### 2. Comandos Úteis
 
-## Resources
+```bash
+# Rebuild da aplicação
+docker-compose build app
 
-Check out a few resources that may come in handy when working with NestJS:
+# Executar migrations do Prisma
+docker-compose exec app npx prisma migrate deploy
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+# Executar seed do banco
+docker-compose exec app npm run run-seed
 
-## Support
+# Acessar bash da aplicação
+docker-compose exec app sh
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+# Acessar PostgreSQL
+docker-compose exec postgres psql -U postgres -d brain_ag
+```
 
-## Stay in touch
+### 5. Primeiro Setup
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+# 1. Subir apenas o banco de dados
+docker-compose up -d postgres
 
-## License
+# 2. Executar as migrations
+docker-compose exec app npx prisma migrate deploy
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+# 3. Executar seed (opcional)
+docker-compose exec app npm run run-seed
+
+# 4. Subir a aplicação
+docker-compose up -d app
+```
+
+## Documentação da API (Swagger)
+
+A documentação interativa da API está disponível através do Swagger UI:
+
+**URL:** http://localhost:3000/docs
+
+Através da documentação você pode:
+- Visualizar todos os endpoints disponíveis
+- Testar as rotas diretamente no navegador
+- Ver os schemas de request/response
+- Entender os códigos de status retornados
+
+## Logging
+
+Para mais detalhes sobre a estratégia de logging da aplicação, consulte o documento [LOGGING.md](./LOGGING.md).
+
+## Arquitetura do Banco de Dados
+
+O sistema utiliza PostgreSQL como banco de dados principal e o Prisma como ORM. A arquitetura foi projetada seguindo boas práticas.
+
+### Diagrama de Entidade-Relacionamento (DER)
+
+![DER - Diagrama de Entidade-Relacionamento](docs/images/DER.png)
+
+### Descrição das Entidades
+
+#### **Producer (Produtor)**
+- Entidade principal que representa os produtores rurais
+- Possui CPF/CNPJ único para identificação
+- Um produtor pode ter múltiplas fazendas
+
+#### **Farm (Fazenda)**
+- Representa as propriedades rurais de um produtor
+- Contém informações de localização (cidade, estado)
+- Armazena dados de área total, área agricultável e área de vegetação
+- Relaciona-se com um único produtor (N:1)
+
+#### **Planting (Plantio)**
+- Representa a associação entre uma fazenda, uma safra e uma cultura
+- Contém informações específicas do plantio (área plantada, datas, observações)
+- Possui constraint único para evitar duplicação (fazenda + safra + cultura)
+- Relaciona-se com Farm, Season e Crop (N:1 cada)
+
+#### **Crop (Cultura)**
+- Cadastro de culturas agrícolas (ex: Soja, Milho, Algodão)
+- Nome único para evitar duplicação
+- Pode incluir descrição e categoria
+
+#### **Season (Safra)**
+- Representa períodos de produção agrícola
+- Contém nome, ano e período de vigência
+- Constraint único para nome + ano
+- Campo 'active' para controle de safras ativas
+
+## Rotas da API
+
+### Dashboard
+- `GET /dashboard` - Buscar dados consolidados do dashboard
+
+### Produtores (Producers)
+- `POST /producers` - Cadastrar um novo produtor
+- `GET /producers/all` - Buscar todos os produtores
+- `GET /producers/:id` - Buscar produtor por ID
+- `PATCH /producers` - Atualizar dados de um produtor
+- `DELETE /producers/:id` - Deletar um produtor
+
+### Fazendas (Farms)
+- `POST /farms` - Criar uma nova fazenda
+
+### Safras (Seasons)
+- `POST /seasons` - Criar uma nova safra
+
+### Culturas (Crops)
+- `POST /crops` - Criar uma nova cultura
+
+### Plantios (Plantings)
+- `POST /plantings` - Criar um novo plantio
+
+## Portas Utilizadas
+
+- **Aplicação**: http://localhost:3000
+- **PostgreSQL**: localhost:5432
+- **Swagger Docs**: http://localhost:3000/docs

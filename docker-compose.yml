@@ -21,15 +21,15 @@ services:
     environment:
       DATABASE_URL: 'postgresql://docker:docker@postgres:5432/brain_ag?schema=public'
       NODE_ENV: production
+      LOG_LEVEL: warn
+      PORT: 3000
     ports:
       - '3000:3000'
     depends_on:
       - postgres
     networks:
       - brain-ag-network
-    volumes:
-      - .:/app
-      - /app/node_modules
+    restart: unless-stopped
 
 volumes:
   postgres_data:

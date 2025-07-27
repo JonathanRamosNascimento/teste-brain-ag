@@ -5,11 +5,13 @@ import { ProducersRepository } from '../repositories/producers.repository';
 import { ValidationsDocuments } from '../validators/validations-documents';
 import { CreateProducerDto } from '../dto/create-producer.dto';
 import { Producer } from '../entities/producer.entity';
+import { LoggingService } from '@logging/logging.service';
 
 describe('CreateProducerUseCase', () => {
   let useCase: CreateProducerUseCase;
   let repository: jest.Mocked<ProducersRepository>;
   let validations: jest.Mocked<ValidationsDocuments>;
+  let loggingService: jest.Mocked<LoggingService>;
 
   const mockCreateProducerDto: CreateProducerDto = {
     name: 'João Silva',
@@ -46,6 +48,16 @@ describe('CreateProducerUseCase', () => {
       isValidDocument: jest.fn(),
     };
 
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+      logBusinessLogic: jest.fn(),
+      logValidationError: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateProducerUseCase,
@@ -57,12 +69,17 @@ describe('CreateProducerUseCase', () => {
           provide: ValidationsDocuments,
           useValue: mockValidations,
         },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
       ],
     }).compile();
 
     useCase = module.get<CreateProducerUseCase>(CreateProducerUseCase);
     repository = module.get(ProducersRepository);
     validations = module.get(ValidationsDocuments);
+    loggingService = module.get(LoggingService);
   });
 
   afterEach(() => {
@@ -84,6 +101,43 @@ describe('CreateProducerUseCase', () => {
     );
     expect(repository.create).toHaveBeenCalledWith(mockCreateProducerDto);
     expect(result).toEqual(mockProducer);
+
+    // Verificar logs de negócio
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(4);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateProducerUseCase',
+      'Iniciando criação de produtor',
+      {
+        cpfCnpj: mockCreateProducerDto.cpfCnpj,
+        name: mockCreateProducerDto.name,
+      },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateProducerUseCase',
+      'Documento validado com sucesso',
+      { cpfCnpj: mockCreateProducerDto.cpfCnpj },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      3,
+      'CreateProducerUseCase',
+      'Verificação de duplicidade concluída - criando produtor',
+      { cpfCnpj: mockCreateProducerDto.cpfCnpj },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      4,
+      'CreateProducerUseCase',
+      'Produtor criado com sucesso',
+      {
+        producerId: mockProducer.id,
+        cpfCnpj: mockProducer.cpfCnpj,
+        name: mockProducer.name,
+      },
+    );
+
+    // Verificar que não houve logs de erro
+    expect(loggingService.logValidationError).not.toHaveBeenCalled();
   });
 
   it('should throw ConflictException when document is invalid', async () => {
@@ -103,6 +157,21 @@ describe('CreateProducerUseCase', () => {
     );
     expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
     expect(repository.create).not.toHaveBeenCalled();
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(1);
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledWith(
+      'CreateProducerUseCase',
+      'Iniciando criação de produtor',
+      { cpfCnpj: invalidDocumentDto.cpfCnpj, name: invalidDocumentDto.name },
+    );
+
+    expect(loggingService.logValidationError).toHaveBeenCalledTimes(1);
+    expect(loggingService.logValidationError).toHaveBeenCalledWith(
+      'cpfCnpj',
+      invalidDocumentDto.cpfCnpj,
+      'Formato de documento inválido',
+    );
   });
 
   it('should throw ConflictException when producer already exists with same document', async () => {
@@ -120,6 +189,35 @@ describe('CreateProducerUseCase', () => {
       mockCreateProducerDto.cpfCnpj,
     );
     expect(repository.create).not.toHaveBeenCalled();
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(3);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateProducerUseCase',
+      'Iniciando criação de produtor',
+      {
+        cpfCnpj: mockCreateProducerDto.cpfCnpj,
+        name: mockCreateProducerDto.name,
+      },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateProducerUseCase',
+      'Documento validado com sucesso',
+      { cpfCnpj: mockCreateProducerDto.cpfCnpj },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      3,
+      'CreateProducerUseCase',
+      'Tentativa de criar produtor com documento duplicado',
+      {
+        cpfCnpj: mockCreateProducerDto.cpfCnpj,
+        existingProducerId: mockExistingProducer.id,
+      },
+    );
+
+    expect(loggingService.logValidationError).not.toHaveBeenCalled();
   });
 
   it('should call methods in correct order', async () => {
@@ -140,6 +238,15 @@ describe('CreateProducerUseCase', () => {
       mockCreateProducerDto.cpfCnpj,
     );
     expect(repository.create).toHaveBeenCalledWith(mockCreateProducerDto);
+
+    // Verificar ordem dos logs
+    const logCalls = loggingService.logBusinessLogic.mock.calls;
+    expect(logCalls[0][1]).toBe('Iniciando criação de produtor');
+    expect(logCalls[1][1]).toBe('Documento validado com sucesso');
+    expect(logCalls[2][1]).toBe(
+      'Verificação de duplicidade concluída - criando produtor',
+    );
+    expect(logCalls[3][1]).toBe('Produtor criado com sucesso');
   });
 
   it('should propagate repository errors correctly', async () => {
@@ -159,6 +266,30 @@ describe('CreateProducerUseCase', () => {
       mockCreateProducerDto.cpfCnpj,
     );
     expect(repository.create).toHaveBeenCalledWith(mockCreateProducerDto);
+
+    // Verificar que os logs iniciais foram chamados mesmo com erro
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(3);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateProducerUseCase',
+      'Iniciando criação de produtor',
+      {
+        cpfCnpj: mockCreateProducerDto.cpfCnpj,
+        name: mockCreateProducerDto.name,
+      },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateProducerUseCase',
+      'Documento validado com sucesso',
+      { cpfCnpj: mockCreateProducerDto.cpfCnpj },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      3,
+      'CreateProducerUseCase',
+      'Verificação de duplicidade concluída - criando produtor',
+      { cpfCnpj: mockCreateProducerDto.cpfCnpj },
+    );
   });
 
   it('should work with different types of valid documents', async () => {
@@ -185,5 +316,67 @@ describe('CreateProducerUseCase', () => {
     expect(repository.findByCpfCnpj).toHaveBeenCalledWith(cnpjDto.cpfCnpj);
     expect(repository.create).toHaveBeenCalledWith(cnpjDto);
     expect(result).toEqual(mockCompanyProducer);
+
+    // Verificar logs específicos para CNPJ
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(4);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateProducerUseCase',
+      'Iniciando criação de produtor',
+      { cpfCnpj: cnpjDto.cpfCnpj, name: cnpjDto.name },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      4,
+      'CreateProducerUseCase',
+      'Produtor criado com sucesso',
+      {
+        producerId: mockCompanyProducer.id,
+        cpfCnpj: mockCompanyProducer.cpfCnpj,
+        name: mockCompanyProducer.name,
+      },
+    );
+  });
+
+  it('should log validation error with correct field name and value', async () => {
+    const invalidDto: CreateProducerDto = {
+      name: 'Test User',
+      cpfCnpj: 'invalid-document',
+    };
+
+    validations.isValidDocument.mockReturnValue(false);
+
+    await expect(useCase.execute(invalidDto)).rejects.toThrow(
+      ConflictException,
+    );
+
+    expect(loggingService.logValidationError).toHaveBeenCalledWith(
+      'cpfCnpj',
+      'invalid-document',
+      'Formato de documento inválido',
+    );
+  });
+
+  it('should log all business logic steps in successful flow', async () => {
+    validations.isValidDocument.mockReturnValue(true);
+    repository.findByCpfCnpj.mockResolvedValue(null);
+    repository.create.mockResolvedValue(mockProducer);
+
+    await useCase.execute(mockCreateProducerDto);
+
+    const expectedLogMessages = [
+      'Iniciando criação de produtor',
+      'Documento validado com sucesso',
+      'Verificação de duplicidade concluída - criando produtor',
+      'Produtor criado com sucesso',
+    ];
+
+    expectedLogMessages.forEach((message, index) => {
+      expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+        index + 1,
+        'CreateProducerUseCase',
+        message,
+        expect.any(Object),
+      );
+    });
   });
 });

@@ -4,9 +4,10 @@ import { FindSeasonById } from './use-cases/abstractions/find-season-by-id.abstr
 import { FindSeasonByIdUseCase } from './use-cases/find-season-by-id.use-case';
 import { CreateSeasonController } from './controllers/create-season.controller';
 import { CreateSeasonUseCase } from './use-cases/create-season.use-case';
+import { LoggingModule } from '../../logging/logging.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, LoggingModule],
   controllers: [CreateSeasonController],
   providers: [
     {

@@ -1,4 +1,5 @@
 import { PrismaModule } from '@database/prisma/prisma.module';
+import { LoggingModule } from '@logging/logging.module';
 import { ProducerModule } from '@modules/producer/producer.module';
 import { Module } from '@nestjs/common';
 import { CreateFarmController } from './controllers/create-farm.controller';
@@ -18,7 +19,7 @@ import { TotalAreaHectaresUseCase } from './use-cases/total-area-hectares.use-ca
 import { ValidationArea } from './validators/validation-area';
 
 @Module({
-  imports: [PrismaModule, ProducerModule],
+  imports: [PrismaModule, ProducerModule, LoggingModule],
   controllers: [CreateFarmController],
   providers: [
     CreateFarmUseCase,

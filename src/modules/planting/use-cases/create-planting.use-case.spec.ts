@@ -10,6 +10,7 @@ import { Planting } from '../entities/planting.entity';
 import { Crop } from '@modules/crop/entities/crop.entity';
 import { Farm } from '@modules/farm/entities/farm.entity';
 import { Season } from '@modules/season/entities/season.entity';
+import { LoggingService } from '@logging/logging.service';
 
 describe('CreatePlantingUseCase', () => {
   let useCase: CreatePlantingUseCase;
@@ -17,6 +18,7 @@ describe('CreatePlantingUseCase', () => {
   let findCropById: jest.Mocked<FindCropById>;
   let findFarmById: jest.Mocked<FindFarmById>;
   let findSeasonById: jest.Mocked<FindSeasonById>;
+  let loggingService: jest.Mocked<LoggingService>;
 
   const mockCreatePlantingDto: CreatePlantingDto = {
     plantedAreaHectares: 100.5,
@@ -86,6 +88,16 @@ describe('CreatePlantingUseCase', () => {
       execute: jest.fn(),
     };
 
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+      logBusinessLogic: jest.fn(),
+      logValidationError: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreatePlantingUseCase,
@@ -105,6 +117,10 @@ describe('CreatePlantingUseCase', () => {
           provide: FindSeasonById,
           useValue: mockFindSeasonById,
         },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
       ],
     }).compile();
 
@@ -113,6 +129,7 @@ describe('CreatePlantingUseCase', () => {
     findCropById = module.get(FindCropById);
     findFarmById = module.get(FindFarmById);
     findSeasonById = module.get(FindSeasonById);
+    loggingService = module.get(LoggingService);
   });
 
   afterEach(() => {
@@ -127,6 +144,29 @@ describe('CreatePlantingUseCase', () => {
     repository.create.mockResolvedValue(mockPlanting);
 
     const result = await useCase.execute(mockCreatePlantingDto);
+
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledWith(
+      'CreatePlantingUseCase',
+      'Iniciando criação de plantio',
+      {
+        cropId: mockCreatePlantingDto.cropId,
+        seasonId: mockCreatePlantingDto.seasonId,
+        farmId: mockCreatePlantingDto.farmId,
+        plantedAreaHectares: mockCreatePlantingDto.plantedAreaHectares,
+      },
+    );
+
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledWith(
+      'CreatePlantingUseCase',
+      'Plantio criado com sucesso',
+      {
+        plantingId: mockPlanting.id,
+        cropId: mockCreatePlantingDto.cropId,
+        seasonId: mockCreatePlantingDto.seasonId,
+        farmId: mockCreatePlantingDto.farmId,
+        plantedAreaHectares: mockCreatePlantingDto.plantedAreaHectares,
+      },
+    );
 
     expect(findCropById.execute).toHaveBeenCalledWith(
       mockCreatePlantingDto.cropId,
@@ -161,6 +201,28 @@ describe('CreatePlantingUseCase', () => {
       new ConflictException('Plantio já cadastrado'),
     );
 
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledWith(
+      'CreatePlantingUseCase',
+      'Iniciando criação de plantio',
+      {
+        cropId: mockCreatePlantingDto.cropId,
+        seasonId: mockCreatePlantingDto.seasonId,
+        farmId: mockCreatePlantingDto.farmId,
+        plantedAreaHectares: mockCreatePlantingDto.plantedAreaHectares,
+      },
+    );
+
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledWith(
+      'CreatePlantingUseCase',
+      'Tentativa de criar plantio duplicado',
+      {
+        cropId: mockCreatePlantingDto.cropId,
+        seasonId: mockCreatePlantingDto.seasonId,
+        farmId: mockCreatePlantingDto.farmId,
+        existingPlantingId: existingPlanting.id,
+      },
+    );
+
     expect(findCropById.execute).toHaveBeenCalledWith(
       mockCreatePlantingDto.cropId,
     );
@@ -187,6 +249,7 @@ describe('CreatePlantingUseCase', () => {
 
     await useCase.execute(mockCreatePlantingDto);
 
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(2);
     expect(findCropById.execute).toHaveBeenCalledTimes(1);
     expect(findFarmById.execute).toHaveBeenCalledTimes(1);
     expect(findSeasonById.execute).toHaveBeenCalledTimes(1);

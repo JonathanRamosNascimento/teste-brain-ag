@@ -10,8 +10,10 @@ import { PrismaFarmsRepository } from './repositories/prisma-farms.repository';
 import { PrismaPlantingsRepository } from './repositories/prisma-plantings.repository';
 import { PrismaProducersRepository } from './repositories/prisma-producers.repository';
 import { PrismaSeasonsRepository } from './repositories/prisma-seasons.repository';
+import { LoggingModule } from '../../logging/logging.module';
 
 @Module({
+  imports: [LoggingModule],
   providers: [
     PrismaService,
     {

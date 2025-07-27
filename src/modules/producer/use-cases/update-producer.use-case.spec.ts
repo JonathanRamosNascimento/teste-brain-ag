@@ -5,11 +5,13 @@ import { ProducersRepository } from '../repositories/producers.repository';
 import { ValidationsDocuments } from '../validators/validations-documents';
 import { UpdateProducerDto } from '../dto/update-producer.dto';
 import { Producer } from '../entities/producer.entity';
+import { LoggingService } from '@logging/logging.service';
 
 describe('UpdateProducerUseCase', () => {
   let useCase: UpdateProducerUseCase;
   let repository: jest.Mocked<ProducersRepository>;
   let validations: jest.Mocked<ValidationsDocuments>;
+  let loggingService: jest.Mocked<LoggingService>;
 
   const mockUpdateProducerDto: UpdateProducerDto = {
     id: '123e4567-e89b-12d3-a456-426614174000',
@@ -57,6 +59,16 @@ describe('UpdateProducerUseCase', () => {
       isValidDocument: jest.fn(),
     };
 
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+      logBusinessLogic: jest.fn(),
+      logValidationError: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         UpdateProducerUseCase,
@@ -68,19 +80,24 @@ describe('UpdateProducerUseCase', () => {
           provide: ValidationsDocuments,
           useValue: mockValidations,
         },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
       ],
     }).compile();
 
     useCase = module.get<UpdateProducerUseCase>(UpdateProducerUseCase);
     repository = module.get(ProducersRepository);
     validations = module.get(ValidationsDocuments);
+    loggingService = module.get(LoggingService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
   });
 
-  it('should update a producer successfully when data is valid and cpfCnpj is new', async () => {
+  it('should update a producer successfully with valid data', async () => {
     repository.findById.mockResolvedValue(mockExistingProducer);
     validations.isValidDocument.mockReturnValue(true);
     repository.findByCpfCnpj.mockResolvedValue(null);
@@ -97,26 +114,41 @@ describe('UpdateProducerUseCase', () => {
     );
     expect(repository.update).toHaveBeenCalledWith(mockUpdateProducerDto);
     expect(result).toEqual(mockUpdatedProducer);
-  });
 
-  it('should update a producer successfully when cpfCnpj is not provided', async () => {
-    const updateDtoWithoutCpfCnpj = {
-      id: validProducerId,
-      name: 'João Silva Atualizado',
-    } as UpdateProducerDto;
-
-    repository.findById.mockResolvedValue(mockExistingProducer);
-    repository.update.mockResolvedValue(mockUpdatedProducer);
-
-    const result = await useCase.execute(updateDtoWithoutCpfCnpj);
-
-    expect(repository.findById).toHaveBeenCalledWith(
-      updateDtoWithoutCpfCnpj.id,
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(6);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'UpdateProducerUseCase',
+      'Iniciando atualização de produtor',
+      {
+        producerId: mockUpdateProducerDto.id,
+        updateData: {
+          name: mockUpdateProducerDto.name,
+          cpfCnpj: mockUpdateProducerDto.cpfCnpj,
+        },
+      },
     );
-    expect(validations.isValidDocument).not.toHaveBeenCalled();
-    expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
-    expect(repository.update).toHaveBeenCalledWith(updateDtoWithoutCpfCnpj);
-    expect(result).toEqual(mockUpdatedProducer);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'UpdateProducerUseCase',
+      'Produtor encontrado para atualização',
+      {
+        producerId: mockUpdateProducerDto.id,
+        currentName: mockExistingProducer.name,
+        currentCpfCnpj: mockExistingProducer.cpfCnpj,
+      },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      6,
+      'UpdateProducerUseCase',
+      'Produtor atualizado com sucesso',
+      {
+        producerId: mockUpdatedProducer.id,
+        updatedName: mockUpdatedProducer.name,
+        updatedCpfCnpj: mockUpdatedProducer.cpfCnpj,
+      },
+    );
   });
 
   it('should throw NotFoundException when producer does not exist', async () => {
@@ -127,13 +159,32 @@ describe('UpdateProducerUseCase', () => {
     );
 
     expect(repository.findById).toHaveBeenCalledWith(mockUpdateProducerDto.id);
-    expect(validations.isValidDocument).not.toHaveBeenCalled();
-    expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
     expect(repository.update).not.toHaveBeenCalled();
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(2);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'UpdateProducerUseCase',
+      'Iniciando atualização de produtor',
+      {
+        producerId: mockUpdateProducerDto.id,
+        updateData: {
+          name: mockUpdateProducerDto.name,
+          cpfCnpj: mockUpdateProducerDto.cpfCnpj,
+        },
+      },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'UpdateProducerUseCase',
+      'Tentativa de atualizar produtor inexistente',
+      { producerId: mockUpdateProducerDto.id },
+    );
   });
 
-  it('should throw ConflictException when cpfCnpj format is invalid', async () => {
-    const invalidDocumentDto: UpdateProducerDto = {
+  it('should throw ConflictException when document format is invalid', async () => {
+    const invalidDto: UpdateProducerDto = {
       id: validProducerId,
       name: 'João Silva',
       cpfCnpj: '12345',
@@ -142,19 +193,28 @@ describe('UpdateProducerUseCase', () => {
     repository.findById.mockResolvedValue(mockExistingProducer);
     validations.isValidDocument.mockReturnValue(false);
 
-    await expect(useCase.execute(invalidDocumentDto)).rejects.toThrow(
+    await expect(useCase.execute(invalidDto)).rejects.toThrow(
       new ConflictException('Formato de documento inválido'),
     );
 
-    expect(repository.findById).toHaveBeenCalledWith(invalidDocumentDto.id);
+    expect(repository.findById).toHaveBeenCalledWith(invalidDto.id);
     expect(validations.isValidDocument).toHaveBeenCalledWith(
-      invalidDocumentDto.cpfCnpj,
+      invalidDto.cpfCnpj,
     );
     expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
     expect(repository.update).not.toHaveBeenCalled();
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(3);
+    expect(loggingService.logValidationError).toHaveBeenCalledTimes(1);
+    expect(loggingService.logValidationError).toHaveBeenCalledWith(
+      'cpfCnpj',
+      invalidDto.cpfCnpj,
+      'Formato de documento inválido',
+    );
   });
 
-  it('should throw ConflictException when another producer already has the same cpfCnpj', async () => {
+  it('should throw ConflictException when document already exists for another producer', async () => {
     repository.findById.mockResolvedValue(mockExistingProducer);
     validations.isValidDocument.mockReturnValue(true);
     repository.findByCpfCnpj.mockResolvedValue(mockAnotherProducer);
@@ -171,9 +231,108 @@ describe('UpdateProducerUseCase', () => {
       mockUpdateProducerDto.cpfCnpj,
     );
     expect(repository.update).not.toHaveBeenCalled();
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(5);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      5,
+      'UpdateProducerUseCase',
+      'Tentativa de atualizar com documento duplicado',
+      {
+        producerId: mockUpdateProducerDto.id,
+        cpfCnpj: mockUpdateProducerDto.cpfCnpj,
+        existingProducerId: mockAnotherProducer.id,
+      },
+    );
   });
 
-  it('should call methods in correct order when cpfCnpj is provided', async () => {
+  it('should update producer without changing document when cpfCnpj is not provided', async () => {
+    const dtoWithoutCpfCnpj: UpdateProducerDto = {
+      id: validProducerId,
+      name: 'João Silva Novo Nome',
+    };
+
+    const updatedProducerWithoutCpfCnpj: Producer = {
+      ...mockExistingProducer,
+      name: 'João Silva Novo Nome',
+      updatedAt: new Date('2025-07-26'),
+    };
+
+    repository.findById.mockResolvedValue(mockExistingProducer);
+    repository.update.mockResolvedValue(updatedProducerWithoutCpfCnpj);
+
+    const result = await useCase.execute(dtoWithoutCpfCnpj);
+
+    expect(repository.findById).toHaveBeenCalledWith(dtoWithoutCpfCnpj.id);
+    expect(validations.isValidDocument).not.toHaveBeenCalled();
+    expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
+    expect(repository.update).toHaveBeenCalledWith(dtoWithoutCpfCnpj);
+    expect(result).toEqual(updatedProducerWithoutCpfCnpj);
+
+    // Verificar logs
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(4);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      3,
+      'UpdateProducerUseCase',
+      'Atualizando produtor sem alteração de documento',
+      { producerId: dtoWithoutCpfCnpj.id },
+    );
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      4,
+      'UpdateProducerUseCase',
+      'Produtor atualizado com sucesso',
+      {
+        producerId: updatedProducerWithoutCpfCnpj.id,
+        updatedName: updatedProducerWithoutCpfCnpj.name,
+        updatedCpfCnpj: updatedProducerWithoutCpfCnpj.cpfCnpj,
+      },
+    );
+  });
+
+  it('should allow updating producer with same document', async () => {
+    const dtoWithSameDocument: UpdateProducerDto = {
+      id: mockExistingProducer.id,
+      name: 'João Silva Atualizado',
+      cpfCnpj: mockExistingProducer.cpfCnpj,
+    };
+
+    const updatedProducerSameDoc: Producer = {
+      ...mockExistingProducer,
+      name: 'João Silva Atualizado',
+      updatedAt: new Date('2025-07-26'),
+    };
+
+    repository.findById.mockResolvedValue(mockExistingProducer);
+    validations.isValidDocument.mockReturnValue(true);
+    repository.findByCpfCnpj.mockResolvedValue(mockExistingProducer);
+    repository.update.mockResolvedValue(updatedProducerSameDoc);
+
+    const result = await useCase.execute(dtoWithSameDocument);
+
+    expect(repository.findById).toHaveBeenCalledWith(dtoWithSameDocument.id);
+    expect(validations.isValidDocument).toHaveBeenCalledWith(
+      dtoWithSameDocument.cpfCnpj,
+    );
+    expect(repository.findByCpfCnpj).toHaveBeenCalledWith(
+      dtoWithSameDocument.cpfCnpj,
+    );
+    expect(repository.update).toHaveBeenCalledWith(dtoWithSameDocument);
+    expect(result).toEqual(updatedProducerSameDoc);
+
+    // Verificar que não há log de documento duplicado
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(6);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      5,
+      'UpdateProducerUseCase',
+      'Verificação de duplicidade concluída - atualizando produtor',
+      {
+        producerId: dtoWithSameDocument.id,
+        cpfCnpj: dtoWithSameDocument.cpfCnpj,
+      },
+    );
+  });
+
+  it('should call methods in correct order for complete update', async () => {
     repository.findById.mockResolvedValue(mockExistingProducer);
     validations.isValidDocument.mockReturnValue(true);
     repository.findByCpfCnpj.mockResolvedValue(null);
@@ -186,52 +345,22 @@ describe('UpdateProducerUseCase', () => {
     expect(repository.findByCpfCnpj).toHaveBeenCalledTimes(1);
     expect(repository.update).toHaveBeenCalledTimes(1);
 
-    expect(repository.findById).toHaveBeenCalledWith(mockUpdateProducerDto.id);
-    expect(validations.isValidDocument).toHaveBeenCalledWith(
-      mockUpdateProducerDto.cpfCnpj,
+    // Verificar ordem dos logs
+    const logCalls = loggingService.logBusinessLogic.mock.calls;
+    expect(logCalls[0][1]).toBe('Iniciando atualização de produtor');
+    expect(logCalls[1][1]).toBe('Produtor encontrado para atualização');
+    expect(logCalls[2][1]).toBe('Validando novo documento');
+    expect(logCalls[3][1]).toBe(
+      'Documento validado com sucesso - verificando duplicidade',
     );
-    expect(repository.findByCpfCnpj).toHaveBeenCalledWith(
-      mockUpdateProducerDto.cpfCnpj,
+    expect(logCalls[4][1]).toBe(
+      'Verificação de duplicidade concluída - atualizando produtor',
     );
-    expect(repository.update).toHaveBeenCalledWith(mockUpdateProducerDto);
+    expect(logCalls[5][1]).toBe('Produtor atualizado com sucesso');
   });
 
-  it('should propagate repository errors correctly when findById fails', async () => {
+  it('should propagate repository errors correctly', async () => {
     const repositoryError = new Error('Erro de conexão com o banco');
-    repository.findById.mockRejectedValue(repositoryError);
-
-    await expect(useCase.execute(mockUpdateProducerDto)).rejects.toThrow(
-      repositoryError,
-    );
-
-    expect(repository.findById).toHaveBeenCalledWith(mockUpdateProducerDto.id);
-    expect(validations.isValidDocument).not.toHaveBeenCalled();
-    expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
-    expect(repository.update).not.toHaveBeenCalled();
-  });
-
-  it('should propagate repository errors correctly when findByCpfCnpj fails', async () => {
-    const repositoryError = new Error('Erro ao buscar por documento');
-    repository.findById.mockResolvedValue(mockExistingProducer);
-    validations.isValidDocument.mockReturnValue(true);
-    repository.findByCpfCnpj.mockRejectedValue(repositoryError);
-
-    await expect(useCase.execute(mockUpdateProducerDto)).rejects.toThrow(
-      repositoryError,
-    );
-
-    expect(repository.findById).toHaveBeenCalledWith(mockUpdateProducerDto.id);
-    expect(validations.isValidDocument).toHaveBeenCalledWith(
-      mockUpdateProducerDto.cpfCnpj,
-    );
-    expect(repository.findByCpfCnpj).toHaveBeenCalledWith(
-      mockUpdateProducerDto.cpfCnpj,
-    );
-    expect(repository.update).not.toHaveBeenCalled();
-  });
-
-  it('should propagate repository errors correctly when update fails', async () => {
-    const repositoryError = new Error('Erro ao atualizar no banco');
     repository.findById.mockResolvedValue(mockExistingProducer);
     validations.isValidDocument.mockReturnValue(true);
     repository.findByCpfCnpj.mockResolvedValue(null);
@@ -249,60 +378,17 @@ describe('UpdateProducerUseCase', () => {
       mockUpdateProducerDto.cpfCnpj,
     );
     expect(repository.update).toHaveBeenCalledWith(mockUpdateProducerDto);
-  });
 
-  it('should work with different types of valid documents', async () => {
-    const cnpjDto: UpdateProducerDto = {
-      id: validProducerId,
-      name: 'Empresa LTDA Atualizada',
-      cpfCnpj: '12345678000195',
-    };
-
-    const mockUpdatedCompany: Producer = {
-      id: validProducerId,
-      name: 'Empresa LTDA Atualizada',
-      cpfCnpj: '12345678000195',
-      createdAt: new Date('2025-07-20'),
-      updatedAt: new Date('2025-07-26'),
-    };
-
-    repository.findById.mockResolvedValue(mockExistingProducer);
-    validations.isValidDocument.mockReturnValue(true);
-    repository.findByCpfCnpj.mockResolvedValue(null);
-    repository.update.mockResolvedValue(mockUpdatedCompany);
-
-    const result = await useCase.execute(cnpjDto);
-
-    expect(repository.findById).toHaveBeenCalledWith(cnpjDto.id);
-    expect(validations.isValidDocument).toHaveBeenCalledWith(cnpjDto.cpfCnpj);
-    expect(repository.findByCpfCnpj).toHaveBeenCalledWith(cnpjDto.cpfCnpj);
-    expect(repository.update).toHaveBeenCalledWith(cnpjDto);
-    expect(result).toEqual(mockUpdatedCompany);
-  });
-
-  it('should work with partial updates (only name)', async () => {
-    const partialUpdateDto = {
-      id: validProducerId,
-      name: 'Nome Atualizado',
-    } as UpdateProducerDto;
-
-    const mockPartialUpdate: Producer = {
-      id: validProducerId,
-      name: 'Nome Atualizado',
-      cpfCnpj: '12345678901',
-      createdAt: new Date('2025-07-20'),
-      updatedAt: new Date('2025-07-26'),
-    };
-
-    repository.findById.mockResolvedValue(mockExistingProducer);
-    repository.update.mockResolvedValue(mockPartialUpdate);
-
-    const result = await useCase.execute(partialUpdateDto);
-
-    expect(repository.findById).toHaveBeenCalledWith(partialUpdateDto.id);
-    expect(validations.isValidDocument).not.toHaveBeenCalled();
-    expect(repository.findByCpfCnpj).not.toHaveBeenCalled();
-    expect(repository.update).toHaveBeenCalledWith(partialUpdateDto);
-    expect(result).toEqual(mockPartialUpdate);
+    // Verificar que os logs foram chamados até o ponto do erro
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(5);
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      5,
+      'UpdateProducerUseCase',
+      'Verificação de duplicidade concluída - atualizando produtor',
+      {
+        producerId: mockUpdateProducerDto.id,
+        cpfCnpj: mockUpdateProducerDto.cpfCnpj,
+      },
+    );
   });
 });

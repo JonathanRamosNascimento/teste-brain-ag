@@ -4,10 +4,12 @@ import { CreateSeasonUseCase } from './create-season.use-case';
 import { SeasonsRepository } from '../repositories/seasons.repository';
 import { CreateSeasonDto } from '../dto/create-season.dto';
 import { Season } from '../entities/season.entity';
+import { LoggingService } from '@logging/logging.service';
 
 describe('CreateSeasonUseCase', () => {
   let useCase: CreateSeasonUseCase;
   let repository: jest.Mocked<SeasonsRepository>;
+  let loggingService: jest.Mocked<LoggingService>;
 
   const mockCreateSeasonDto: CreateSeasonDto = {
     name: 'Safra 2024',
@@ -36,6 +38,16 @@ describe('CreateSeasonUseCase', () => {
       delete: jest.fn(),
     };
 
+    const mockLoggingService = {
+      log: jest.fn(),
+      error: jest.fn(),
+      warn: jest.fn(),
+      debug: jest.fn(),
+      verbose: jest.fn(),
+      logBusinessLogic: jest.fn(),
+      logValidationError: jest.fn(),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         CreateSeasonUseCase,
@@ -43,11 +55,16 @@ describe('CreateSeasonUseCase', () => {
           provide: SeasonsRepository,
           useValue: mockRepository,
         },
+        {
+          provide: LoggingService,
+          useValue: mockLoggingService,
+        },
       ],
     }).compile();
 
     useCase = module.get<CreateSeasonUseCase>(CreateSeasonUseCase);
     repository = module.get(SeasonsRepository);
+    loggingService = module.get(LoggingService);
   });
 
   afterEach(() => {
@@ -60,6 +77,7 @@ describe('CreateSeasonUseCase', () => {
 
     const result = await useCase.execute(mockCreateSeasonDto);
 
+    // Verificar chamadas do repositório
     expect(repository.findByNameAndYear).toHaveBeenCalledWith(
       mockCreateSeasonDto.name,
       mockCreateSeasonDto.year,
@@ -67,6 +85,38 @@ describe('CreateSeasonUseCase', () => {
     expect(repository.findByNameAndYear).toHaveBeenCalledTimes(1);
     expect(repository.create).toHaveBeenCalledWith(mockCreateSeasonDto);
     expect(repository.create).toHaveBeenCalledTimes(1);
+
+    // Verificar logs de negócio
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(3);
+
+    // Log de início
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateSeasonUseCase',
+      'Iniciando criação de safra',
+      { name: mockCreateSeasonDto.name, year: mockCreateSeasonDto.year },
+    );
+
+    // Log após verificação de duplicidade
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateSeasonUseCase',
+      'Verificação de duplicidade concluída - criando safra',
+      { name: mockCreateSeasonDto.name, year: mockCreateSeasonDto.year },
+    );
+
+    // Log de sucesso
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      3,
+      'CreateSeasonUseCase',
+      'Safra criada com sucesso',
+      {
+        seasonId: mockSeason.id,
+        name: mockSeason.name,
+        year: mockSeason.year,
+      },
+    );
+
     expect(result).toEqual(mockSeason);
   });
 
@@ -80,12 +130,36 @@ describe('CreateSeasonUseCase', () => {
       'Safras com o mesmo nome e ano já existem',
     );
 
+    // Verificar chamadas do repositório
     expect(repository.findByNameAndYear).toHaveBeenCalledWith(
       mockCreateSeasonDto.name,
       mockCreateSeasonDto.year,
     );
     expect(repository.findByNameAndYear).toHaveBeenCalledTimes(1);
     expect(repository.create).not.toHaveBeenCalled();
+
+    // Verificar logs de negócio
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(2);
+
+    // Log de início
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateSeasonUseCase',
+      'Iniciando criação de safra',
+      { name: mockCreateSeasonDto.name, year: mockCreateSeasonDto.year },
+    );
+
+    // Log de duplicidade detectada
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateSeasonUseCase',
+      'Tentativa de criar safra com nome e ano duplicados',
+      {
+        name: mockCreateSeasonDto.name,
+        year: mockCreateSeasonDto.year,
+        existingSeasonId: mockSeason.id,
+      },
+    );
   });
 
   it('should handle creation error correctly', async () => {
@@ -95,10 +169,30 @@ describe('CreateSeasonUseCase', () => {
 
     await expect(useCase.execute(mockCreateSeasonDto)).rejects.toThrow(error);
 
+    // Verificar chamadas do repositório
     expect(repository.findByNameAndYear).toHaveBeenCalledWith(
       mockCreateSeasonDto.name,
       mockCreateSeasonDto.year,
     );
     expect(repository.create).toHaveBeenCalledWith(mockCreateSeasonDto);
+
+    // Verificar logs de negócio até o ponto do erro
+    expect(loggingService.logBusinessLogic).toHaveBeenCalledTimes(2);
+
+    // Log de início
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      1,
+      'CreateSeasonUseCase',
+      'Iniciando criação de safra',
+      { name: mockCreateSeasonDto.name, year: mockCreateSeasonDto.year },
+    );
+
+    // Log após verificação de duplicidade
+    expect(loggingService.logBusinessLogic).toHaveBeenNthCalledWith(
+      2,
+      'CreateSeasonUseCase',
+      'Verificação de duplicidade concluída - criando safra',
+      { name: mockCreateSeasonDto.name, year: mockCreateSeasonDto.year },
+    );
   });
 });

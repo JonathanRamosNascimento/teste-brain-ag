@@ -5,9 +5,10 @@ import { SeasonModule } from '@modules/season/season.module';
 import { Module } from '@nestjs/common';
 import { CreatePlantingController } from './controllers/create-planting.controller';
 import { CreatePlantingUseCase } from './use-cases/create-planting.use-case';
+import { LoggingModule } from '@logging/logging.module';
 
 @Module({
-  imports: [FarmModule, SeasonModule, CropModule, PrismaModule],
+  imports: [FarmModule, SeasonModule, CropModule, PrismaModule, LoggingModule],
   controllers: [CreatePlantingController],
   providers: [CreatePlantingUseCase],
 })

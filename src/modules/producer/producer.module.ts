@@ -12,9 +12,10 @@ import { FindAllProducersUseCase } from './use-cases/find-all-producers.use-case
 import { FindProducerByIdController } from './controllers/find-producer-by-id.controller';
 import { FindProducerByIdUseCase } from './use-cases/find-producer-by-id.use-case';
 import { FindProducerById } from './use-cases/abstractions/find-producer-by-id.abstraction';
+import { LoggingModule } from '../../logging/logging.module';
 
 @Module({
-  imports: [PrismaModule],
+  imports: [PrismaModule, LoggingModule],
   controllers: [
     DeleteProducerController,
     CreateProducerController,

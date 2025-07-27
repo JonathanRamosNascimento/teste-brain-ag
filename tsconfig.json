@@ -24,7 +24,8 @@
       "@guards/*": ["./src/guards/*"],
       "@interfaces/*": ["./src/interfaces/*"],
       "@modules/*": ["./src/modules/*"],
-      "@test/*": ["./test/*"]
+      "@test/*": ["./test/*"],
+      "@logging/*": ["./src/logging/*"]
     }
   }
 }
