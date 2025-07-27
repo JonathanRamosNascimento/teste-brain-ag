@@ -65,33 +65,17 @@ docker-compose down
 # Rebuild da aplicação
 docker-compose build app
 
-# Executar migrations do Prisma
-docker-compose exec app npx prisma migrate deploy
-
 # Executar seed do banco
-docker-compose exec app npm run run-seed
+docker-compose exec app npm run run:seed
 
 # Acessar bash da aplicação
 docker-compose exec app sh
 
 # Acessar PostgreSQL
 docker-compose exec postgres psql -U postgres -d brain_ag
-```
 
-### 5. Primeiro Setup
-
-```bash
-# 1. Subir apenas o banco de dados
+# Subir apenas o banco de dados
 docker-compose up -d postgres
-
-# 2. Executar as migrations
-docker-compose exec app npx prisma migrate deploy
-
-# 3. Executar seed (opcional)
-docker-compose exec app npm run run-seed
-
-# 4. Subir a aplicação
-docker-compose up -d app
 ```
 
 ## Documentação da API (Swagger)
